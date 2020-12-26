@@ -3,42 +3,11 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
 
-def _rbf(d, eps):
-    return np.exp(-(d * eps) ** 2)
-
-
-def _distance(x, y):
-    return np.sum(np.abs(x - y))
-
-
-def _pairwise_distances(X):
-    D = np.zeros((len(X), len(X)))
-
-    for i in range(len(X)):
-        for j in range(len(X)):
-            if i == j:
-                continue
-
-            d = _distance(X[i], X[j])
-
-            D[i][j] = d
-            D[j][i] = d
-
-    return D
-
-
 def _score(point, X, y, minority_class, epsilon):
-    mutual_density_score = 0.0
-
-    for i in range(len(X)):
-        rbf = _rbf(_distance(point, X[i]), epsilon)
-
-        if y[i] == minority_class:
-            mutual_density_score -= rbf
-        else:
-            mutual_density_score += rbf
-
-    return mutual_density_score
+    dist = np.sum(np.abs(X - point), axis=1) # distance
+    rbf = np.exp(-1 * (dist * epsilon) ** 2) # rbf
+    rbf[y == minority_class] = -1 * rbf[y == minority_class] # Adjust for minority
+    return np.sum(rbf)
 
 
 class RBO:
